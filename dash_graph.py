@@ -5,46 +5,53 @@ Created on Sat Feb 24 16:53:20 2018
 @author: vict
 """
 
-import pandas_datareader.data as web
-import datetime as dt
+import dash 
+from dash.dependencies import Output, Event
+import dash_core_components as dcc
+import dash_html_components as html
+import plotly
+import random
+import plotly.graph_objs as go
+from collections import deque
 
-start = dt.datetime(2015, 1, 1)
-end = dt.datetime(2018, 2, 8)
+X = deque(maxlen = 20)
+Y = deque(maxlen = 20)
+X.append(1)
+Y.append(1)
 
-df =  web.DataReader('TSLA', 'google', start, end)
+app = dash.Dash(__name__) 
 
-print(df.head())
+app.layout = html.Div(
+        [
+                dcc.Graph(id='live-graph', animate=True),
+                dcc.Interval(
+                        id='graph-update',
+                        interval=1000
+                        )
+                ]
+        )
+        
+@app.callback (
+        Output('live-graph','figure'),
+        events = [Event('graph-update','interval')]
+        )
 
-
-
-"""
-        dcc.Graph(
-                id='ex1',
-                        figure={
-                                'data': [
-                                        { 'x': df.index, 'y': df.Close, 'type': 'line', 'name': stock},
-                                        
-                                        ],
-                                'layout': {                                        'title': stock
-                                        }
-                                })
-"""
-
-
-"""
-app.layout = html.Div(children=[
-        dcc.Input(id = 'input', value = 'Ingrese un dato', type = 'text'),
-        html.Div(id = 'output') 
-        ])
-
-@app.callback(
-        Output(component_id = 'output', component_property = 'children'),
-        [Input(component_id = 'input', component_property = 'value')])
-
-def update_value(input_data):
-    try:
-        #return "Input: {}".format(input_data)
-        return str(float(input_data)**2)
-    except:
-        return "Oh Por Dios Un Error D:"
-"""
+def update_graph():
+    global X
+    global Y
+    X.append(X[-1]+1)
+    Y.append(Y[-1]+(Y[-1]*random.uniform(-0.1,0.1)))
+    
+    data = go .Scatter(
+            x = list(X),
+            y = list(Y),
+            name = 'Scatter',
+            mode = 'lines+markers'
+            )
+    
+    return {'data':[data], 'layout': go.Layout(xaxis = dict(range=[min(X), max(X)]),
+                                                yaxis = dict(range=[min(Y), max(Y)]))}
+    
+    
+if __name__ == '__main__':
+    app.run_server(debug=True)
